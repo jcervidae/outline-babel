@@ -3,7 +3,7 @@
 #
 # Author: Jonathan Cervidae <jonathan.cervidae@gmail.com>
 # PGP Fingerprint: 2DC0 0A44 123E 6CC2 EB55  EAFB B780 421F BF4C 4CB4
-# Last changed: $LastEdit: 2009-06-02 22:19:28 BST$
+# Last changed: $LastEdit: 2009-06-02 22:20:48 BST$
 
 import sys
 import os
@@ -201,8 +201,6 @@ class XMindWriter(OutlineWriter):
                 children = lxml.etree.Element('children')
                 topic.append(children)
                 topics = lxml.etree.Element('topics', { 'type': 'attached' })
-                topics = copy.deepcopy(topics)
-                print id(topics)
                 children.append(topics)
                 self.build_xml(topics, value)
 
@@ -234,8 +232,8 @@ if __name__ == '__main__':
     # FIXME: __subclasses__ enumeration
     # FIXME: should be file, only works cuz kplato implementation
     parser = KPlatoParser(sys.argv[1])
-    from pprint import pprint
-    pprint(parser.tree)
+    #from pprint import pprint
+    #pprint(parser.tree)
     writer = XMindWriter(open(sys.argv[2],"w"),parser.tree)
     writer.write()
 
