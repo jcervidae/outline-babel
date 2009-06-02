@@ -3,7 +3,7 @@
 #
 # Author: Jonathan Cervidae <jonathan.cervidae@gmail.com>
 # PGP Fingerprint: 2DC0 0A44 123E 6CC2 EB55  EAFB B780 421F BF4C 4CB4
-# Last changed: $LastEdit: 2009-06-02 22:23:00 BST$
+# Last changed: $LastEdit: 2009-06-02 22:24:25 BST$
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -219,7 +219,7 @@ class XMindWriter(OutlineWriter):
 
 def usage():
     sys.stderr.write(
-""""%s <input file> <output file>
+"""%s <input file> <output file>
 
 This program converts from one outline format to another. It will detemine
 which output format to use based on the extention of your output file.
@@ -233,10 +233,11 @@ xmind
 
 It can only read kplato as input right now but this will change.
 """ % sys.argv[0])
+    sys.exit(1)
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        usage
+        usage()
 
     logger.addHandler(logging_module.StreamHandler(sys.stdout))
     # Optparse can change verbosity later.
