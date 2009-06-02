@@ -3,7 +3,7 @@
 #
 # Author: Jonathan Cervidae <jonathan.cervidae@gmail.com>
 # PGP Fingerprint: 2DC0 0A44 123E 6CC2 EB55  EAFB B780 421F BF4C 4CB4
-# Last changed: $LastEdit: 2009-06-02 21:54:05 BST$
+# Last changed: $LastEdit: 2009-06-02 22:19:28 BST$
 
 import sys
 import os
@@ -13,6 +13,7 @@ import lxml.etree
 import zipfile
 import random
 from StringIO import StringIO
+import copy
 
 logger = logging_module.getLogger("outline-babel")
 
@@ -103,18 +104,17 @@ class KPlatoParser(OutlineParser):
         doc = self.main_doc_from_zip(zip)
         root = doc.getroot()
         project = root.find("project")
-        self._recursive_build_tree( project.findall("task") )
+        self._recursive_build_tree( self.tree, project.findall("task") )
 
-    def _recursive_build_tree(self, elements):
-        tree = self.tree
+    def _recursive_build_tree(self, branch, elements):
         for element in elements:
             name = element.get("name")
             sub_tasks = element.findall("task")
             if len(sub_tasks) > 0:
-                tree[name] = sub_tree = {}
-                self._recursive_build_tree(sub_tasks)
+                branch[name] = sub_branch = {}
+                self._recursive_build_tree(sub_branch, sub_tasks)
             else:
-                tree[name] = True
+                branch[name] = True
 
 class XMindWriter(OutlineWriter):
     extension = name = "xmind"
@@ -162,18 +162,18 @@ class XMindWriter(OutlineWriter):
         # Now we do the actual map!
         doc = lxml.etree.parse(StringIO('<xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xlink="http://www.w3.org/1999/xlink" version="2.0"/>'))
         content = doc.getroot()
-        sheet = content.makeelement('sheet', self.xmind_id())
+        sheet = lxml.etree.Element('sheet', self.xmind_id())
         content.append(sheet)
-        topic = sheet.makeelement('topic', self.xmind_id())
+        topic = lxml.etree.Element('topic', self.xmind_id())
         sheet.append(topic)
-        title = content.makeelement('title')
+        title = lxml.etree.Element('title')
         title.text = "Exported Sheet"
         sheet.append(title)
-        title = content.makeelement('title')
+        title = lxml.etree.Element('title')
         title.text = "Exported"
         topic.append(title)
-        children = content.makeelement('children')
-        topics = children.makeelement('topics', { 'type': 'attached' })
+        children = lxml.etree.Element('children')
+        topics = lxml.etree.Element('topics', { 'type': 'attached' })
         children.append(topics)
         topic.append(children)
         self.build_xml(topics, self.tree)
@@ -192,15 +192,17 @@ class XMindWriter(OutlineWriter):
 
     def build_xml(self, node, dictionary):
         for key, value in dictionary.items():
-            topic = node.makeelement('topic', self.xmind_id())
+            topic = lxml.etree.Element('topic', self.xmind_id())
             node.append(topic)
-            title = topic.makeelement('title')
+            title = lxml.etree.Element('title')
             title.text = str(key)
             topic.append(title)
             if value is not True:
-                children = topic.makeelement('children')
+                children = lxml.etree.Element('children')
                 topic.append(children)
-                topics = children.makeelement('topics', { 'type': 'attached' })
+                topics = lxml.etree.Element('topics', { 'type': 'attached' })
+                topics = copy.deepcopy(topics)
+                print id(topics)
                 children.append(topics)
                 self.build_xml(topics, value)
 
@@ -232,6 +234,8 @@ if __name__ == '__main__':
     # FIXME: __subclasses__ enumeration
     # FIXME: should be file, only works cuz kplato implementation
     parser = KPlatoParser(sys.argv[1])
+    from pprint import pprint
+    pprint(parser.tree)
     writer = XMindWriter(open(sys.argv[2],"w"),parser.tree)
     writer.write()
 
