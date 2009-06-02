@@ -1,0 +1,54 @@
+<html xmlns:tomboy="http://beatniksoftware.com/tomboy" xmlns:link="http://beatniksoftware.com/tomboy/link" xmlns:size="http://beatniksoftware.com/tomboy/size"><head><META http-equiv="Content-Type" content="text/html; charset=utf-8"><title>Examining content.xml</title><style type="text/css">
+        
+	body {  }
+	h1 { font-size: xx-large;
+     	     font-weight: bold;
+     	     border-bottom: 1px solid black; }
+	div.note { overflow: auto;
+		   position: relative;
+		   display: block;
+		   padding: 5pt;
+		   margin: 5pt; 
+		   white-space: -moz-pre-wrap; /* Mozilla */
+ 	      	   white-space: -pre-wrap;     /* Opera 4 - 6 */
+ 	      	   white-space: -o-pre-wrap;   /* Opera 7 */
+ 	      	   white-space: pre-wrap;      /* CSS3 */
+ 	      	   word-wrap: break-word;      /* IE 5.5+ */ }
+	</style></head><body><div class="note" id="Examining content.xml"><a name="#Examining content.xml"></a><h1>Examining content.xml</h1>
+The XML declaration can't be done properly by lxml at present because it doesn't support standalone. I don't know if XMIND would care but lets write it by hand to the file to be safe as the first line:
+
+<span style="font-family:monospace">&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?&gt;</span>
+
+ID's appear to be random strings of 27 lower-case letters and numbers with the first character always being a number. It is assumed these must be unique.
+
+Encased in sheet element which has id property.
+There are topics with id property. Even the main topic is a topic.
+
+<span style="font-family:monospace">&lt;xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" xmlns:fo="<a style="color:#3465A4" href="http://www.w3.org/1999/XSL/Format">http://www.w3.org/1999/XSL/Format</a></span><span style="font-family:monospace">" xmlns:svg="<a style="color:#3465A4" href="http://www.w3.org/2000/svg">http://www.w3.org/2000/svg</a></span><span style="font-family:monospace">" xmlns:xhtml="<a style="color:#3465A4" href="http://www.w3.org/1999/xhtml">http://www.w3.org/1999/xhtml</a></span><span style="font-family:monospace">" xmlns:xlink="<a style="color:#3465A4" href="http://www.w3.org/1999/xlink">http://www.w3.org/1999/xlink</a></span><span style="font-family:monospace">" version="2.0"&gt;
+	&lt;sheet id="XXX"&gt;
+		&lt;topic id="XX"&gt;
+			&lt;title&gt;</span>Exported<span style="font-family:monospace">&lt;/title&gt;
+			&lt;children&gt;
+				<b>REST OF DOCUMENT GOES HERE</b></span><span style="font-family:monospace">
+			&lt;/children&gt;
+		&lt;/topic&gt;
+	&lt;title&gt;</span>Sheet 1<span style="font-family:monospace">&lt;/title&gt;&lt;
+	&lt;/sheet&gt;
+&lt;/xmap-content&gt;
+</span>
+
+Rest of document sits in the &lt;children&gt; element of the project. Branches with children formatted like:.
+
+<span style="font-family:monospace">&lt;topic id="XXX&gt;
+	&lt;title&gt;</span>A topic with sub-topics<span style="font-family:monospace">&lt;/title&gt;
+	&lt;children&gt;
+		&lt;topics type="attached"&gt;
+		&lt;/topics&gt;
+	&lt;/children&gt;
+&lt;/topic&gt;
+</span>
+And the end branches (leaves?) with no children sit between the &lt;topics&gt; element of branches. They Look like this:
+
+<span style="font-family:monospace">&lt;topic id="XX"&gt;
+	&lt;title&gt;</span>I am a leaf<span style="font-family:monospace">&lt;/title&gt;
+&lt;/topic&gt;</span></div></body></html>
