@@ -3,7 +3,7 @@
 #
 # Author: Jonathan Cervidae <jonathan.cervidae@gmail.com>
 # PGP Fingerprint: 2DC0 0A44 123E 6CC2 EB55  EAFB B780 421F BF4C 4CB4
-# Last changed: $LastEdit: 2009-06-02 21:39:20 BST$
+# Last changed: $LastEdit: 2009-06-02 21:54:05 BST$
 
 import sys
 import os
@@ -73,8 +73,6 @@ class OutlineWriter(object):
         OutlineParser.build_tree. You must write to the file-like object
         passed in as output a suitable representation of this tree for your
         outliner.  """
-        print "I happened"
-        print repr(self)
         self.output = output
         self.tree = tree
 def write(self):
@@ -121,11 +119,7 @@ class KPlatoParser(OutlineParser):
 class XMindWriter(OutlineWriter):
     extension = name = "xmind"
     def __init__(self, output, tree):
-        print "Going Super but it doesn't happen?"
         super(XMindWriter, self).__init__(output, tree)
-        print "hi"
-        print repr(self.output)
-        print "hi again"
         self.used_ids = {}
     def xmind_id(self):
         # I have no idea if the fact the first part is always a number is
@@ -144,14 +138,19 @@ class XMindWriter(OutlineWriter):
         return {'id': number + rest }
 
     def write(self):
+        #zi.compress_type = zipfile.ZIP_DEFLATED
         zip = zipfile.ZipFile(self.output, "w")
+        zi = zipfile.ZipInfo("meta.xml")
+        zi.external_attr = 0644 << 16L
         zip.writestr(
-            "meta.xml",
+            zi,
             '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'
             '<meta xmlns="urn:xmind:xmap:xmlns:meta:2.0" version="2.0"/>'
         )
+        zi = zipfile.ZipInfo("META-INF/manifest.xml")
+        zi.external_attr = 0644 << 16L
         zip.writestr(
-            "META-INF/manifest.xml",
+            zi,
             """<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <manifest xmlns="urn:xmind:xmap:xmlns:manifest:1.0">
   <file-entry full-path="content.xml" media-type="text/xml" />
@@ -174,11 +173,15 @@ class XMindWriter(OutlineWriter):
         title.text = "Exported"
         topic.append(title)
         children = content.makeelement('children')
+        topics = children.makeelement('topics', { 'type': 'attached' })
+        children.append(topics)
         topic.append(children)
-        self.build_xml(children, self.tree)
+        self.build_xml(topics, self.tree)
         xml = '<?xml version="1.0" encoding="utf-8" standalone="no"?>\n'
+        zi = zipfile.ZipInfo("content.xml")
+        zi.external_attr = 0644 << 16L
         zip.writestr(
-            "content.xml",
+            zi,
             '<?xml version="1.0" encoding="utf-8" standalone="no"?>\n' +
             lxml.etree.tostring(
                 doc,method="xml",xml_declaration=None,
@@ -192,7 +195,7 @@ class XMindWriter(OutlineWriter):
             topic = node.makeelement('topic', self.xmind_id())
             node.append(topic)
             title = topic.makeelement('title')
-            title.text = str(value)
+            title.text = str(key)
             topic.append(title)
             if value is not True:
                 children = topic.makeelement('children')
