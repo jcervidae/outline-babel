@@ -1,4 +1,4 @@
-<html xmlns:tomboy="http://beatniksoftware.com/tomboy" xmlns:link="http://beatniksoftware.com/tomboy/link" xmlns:size="http://beatniksoftware.com/tomboy/size"><head><META http-equiv="Content-Type" content="text/html; charset=utf-8"><title>Examining content.xml</title><style type="text/css">
+<html xmlns:tomboy="http://beatniksoftware.com/tomboy" xmlns:link="http://beatniksoftware.com/tomboy/link" xmlns:size="http://beatniksoftware.com/tomboy/size"><head><META http-equiv="Content-Type" content="text/html; charset=utf-8"><title>Examining content.xml from XMind</title><style type="text/css">
         
 	body {  }
 	h1 { font-size: xx-large;
@@ -14,7 +14,7 @@
  	      	   white-space: -o-pre-wrap;   /* Opera 7 */
  	      	   white-space: pre-wrap;      /* CSS3 */
  	      	   word-wrap: break-word;      /* IE 5.5+ */ }
-	</style></head><body><div class="note" id="Examining content.xml"><a name="#Examining content.xml"></a><h1>Examining content.xml</h1>
+	</style></head><body><div class="note" id="Examining content.xml from XMind"><a name="#Examining content.xml from XMind"></a><h1>Examining content.xml from XMind</h1>
 The XML declaration can't be done properly by lxml at present because it doesn't support standalone. I don't know if XMIND would care but lets write it by hand to the file to be safe as the first line:
 
 <span style="font-family:monospace">&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?&gt;</span>
@@ -27,12 +27,14 @@ There are topics with id property. Even the main topic is a topic.
 <span style="font-family:monospace">&lt;xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" xmlns:fo="<a style="color:#3465A4" href="http://www.w3.org/1999/XSL/Format">http://www.w3.org/1999/XSL/Format</a></span><span style="font-family:monospace">" xmlns:svg="<a style="color:#3465A4" href="http://www.w3.org/2000/svg">http://www.w3.org/2000/svg</a></span><span style="font-family:monospace">" xmlns:xhtml="<a style="color:#3465A4" href="http://www.w3.org/1999/xhtml">http://www.w3.org/1999/xhtml</a></span><span style="font-family:monospace">" xmlns:xlink="<a style="color:#3465A4" href="http://www.w3.org/1999/xlink">http://www.w3.org/1999/xlink</a></span><span style="font-family:monospace">" version="2.0"&gt;
 	&lt;sheet id="XXX"&gt;
 		&lt;topic id="XX"&gt;
-			&lt;title&gt;</span>Exported<span style="font-family:monospace">&lt;/title&gt;
+			&lt;title&gt;</span>The Middle Block Title<span style="font-family:monospace">/title&gt;
 			&lt;children&gt;
-				<b>REST OF DOCUMENT GOES HERE</b></span><span style="font-family:monospace">
+				&lt;topics type="attached"&gt;
+					<b>REST OF DOCUMENT GOES HERE</b></span><span style="font-family:monospace">
+				&lt;/topics&gt;
 			&lt;/children&gt;
 		&lt;/topic&gt;
-	&lt;title&gt;</span>Sheet 1<span style="font-family:monospace">&lt;/title&gt;&lt;
+	&lt;title&gt;</span>The Sheet Title<span style="font-family:monospace">&lt;/title&gt;&lt;
 	&lt;/sheet&gt;
 &lt;/xmap-content&gt;
 </span>
