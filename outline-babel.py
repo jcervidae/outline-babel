@@ -3,7 +3,7 @@
 #
 # Author: Jonathan Cervidae <jonathan.cervidae@gmail.com>
 # PGP Fingerprint: 2DC0 0A44 123E 6CC2 EB55  EAFB B780 421F BF4C 4CB4
-# Last changed: $LastEdit: 2009-06-03 00:53:22 BST$
+# Last changed: $LastEdit: 2009-06-06 13:05:02 BST$
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import zipfile
 import random
 from StringIO import StringIO
 import copy
+import optparse
 
 logger = logging_module.getLogger("outline-babel")
 
@@ -96,6 +97,54 @@ class OutlineWriter(object):
         by the docstring of OutlineParser.build_tree"""
         raise NotImplementedError
 
+
+class VYMParser(OutlineParser):
+    name ="vym"
+    @staticmethod
+    def could_this_be_you(input):
+        global logger
+        it_could = False
+        try:
+            zip = zipfile.ZipFile(input)
+        except:
+            logger.debug(
+                "It can't be me because it's not a zip file" %
+                ( str(klass), args[0] )
+            )
+            return False
+        logger.debug("Zip file, could still be me")
+        for name in zip.namelist():
+            last_four = name[-4:].lower()
+            logger.debug("Checking %s against %s" % ( name, last_four) )
+            if last_four == ".xml":
+                logger.debug("We match, looking for doctype")
+                doc = lxml.etree.parse(StringIO(zip.read(name)))
+                logger.debug("Doctype is %s" % doc.docinfo.doctype )
+                return doc.docinfo.doctype == '<!DOCTYPE vymmap>'
+        return False
+    def build_tree(self):
+        zip = zipfile.ZipFile(self.input)
+        doc_path = None
+        for name in zip.namelist():
+            if name[-4:].lower() == ".xml":
+                doc_path = name
+                break
+        if not doc_path:
+            raise StandardError, "This is not a vym file"
+        doc = lxml.etree.parse(StringIO(zip.read(name)))
+        root = doc.getroot()
+        mapcenter = root.find("mapcenter")
+        self._recursive_build_tree(self.tree, mapcenter.findall("branch") )
+    def _recursive_build_tree(self, branch, elements):
+        for element in elements:
+            heading = element.find("heading")
+            name = heading.text
+            sub_branches = element.findall("branch")
+            if len(sub_branches) > 0:
+                branch[name] = sub_branch = {}
+                self._recursive_build_tree(sub_branch, sub_branches)
+            else:
+                branch[name] = True
 
 class KPlatoParser(OutlineParser):
     name = "kplato"
@@ -209,7 +258,7 @@ class XMindWriter(OutlineWriter):
             topic = lxml.etree.Element('topic', self.xmind_id())
             node.append(topic)
             title = lxml.etree.Element('title')
-            title.text = str(key)
+            title.text = key
             topic.append(title)
             if value is not True:
                 children = lxml.etree.Element('children')
@@ -218,37 +267,89 @@ class XMindWriter(OutlineWriter):
                 children.append(topics)
                 self.build_xml(topics, value)
 
-def usage():
-    sys.stderr.write(
-"""%s <input file> <output file>
+
+if __name__ == '__main__':
+    usage = (
+"""%prog [options] <input file> [<output file>]
 
 This program converts from one outline format to another. It will detemine
 which output format to use based on the extention of your output file.
 Currently supported are:
 
 Input:
-kplato
+"""
+    )
+    for klass in OutlineParser.__subclasses__():
+        usage += ( klass.name + os.linesep )
+    usage += "%sOutput:%s" % ( os.linesep, os.linesep )
+    for klass in OutlineWriter.__subclasses__():
+        usage += ( klass.name + os.linesep )
+    usage = usage.rstrip()
+    version="%prog 0.1.2"
+    parser = optparse.OptionParser(usage=usage,version=version)
+    # TODO: Option to force input format
+    # TODO: Dump should not necessarily not write an output file.
+    parser.add_option(
+        "-d", "--dump", action="store_true", dest="dump", default=False,
+        help="Will dump the parsed input tree instead of writing it to an"
+             "to an output file"
+    )
+    parser.add_option(
+        "-v", "--verbose", action="store_true", dest="verbose", default=False,
+        help="Makes the program more chatty"
+    )
+    parser.add_option(
+        "--debug", action="store_true", dest="debug", default=False,
+        help="Makes the program display info useful to it's developers"
+    )
 
-Output:
-xmind
+    options, args = parser.parse_args()
+    expected_number_of_args = 2
+    if options.dump:
+        expected_number_of_args = 1
+    if len(args) != expected_number_of_args:
+        parser.error("incorrect number of arguments")
 
-It can only read kplato as input right now but this will change.
-""" % sys.argv[0])
-    sys.exit(1)
+    logger.addHandler(logging_module.StreamHandler(sys.stderr))
+    if options.verbose:
+        logger.setLevel(logging_module.INFO)
+    else:
+        logger.setLevel(logging_module.WARNING)
+    if options.debug:
+        logger.setLevel(logging_module.DEBUG)
 
-if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        usage()
-
-    logger.addHandler(logging_module.StreamHandler(sys.stdout))
-    # Optparse can change verbosity later.
-    logger.setLevel(logging_module.INFO)
-
-    # FIXME: __subclasses__ enumeration
-    # FIXME: should be file, only works cuz kplato implementation
-    parser = KPlatoParser(sys.argv[1])
-    #from pprint import pprint
-    #pprint(parser.tree)
-    writer = XMindWriter(open(sys.argv[2],"w"),parser.tree)
+    input = open(args[0] ,"r")
+    parsing_class = None
+    # TODO: Just picks first matching parser. This is only OK because current
+    # parsers could never both return true on the same file unless it was
+    # meddled with other than by the proper applications. If a parser is ever
+    # added which could produce multiple matches then we will need to be a bit
+    # more intelligent.
+    logger.debug( "Asking parsers if they can parse %s" % args[0] )
+    for klass in OutlineParser.__subclasses__():
+        logger.debug(
+            "%s%s:%s" %
+            ( os.linesep, str(klass), os.linesep )
+        )
+        input.seek(0,0)
+        if klass.could_this_be_you(input):
+            logger.debug( "I can parse this file." )
+            parsing_class = klass
+            break
+        else:
+            logger.debug( "I cannot parse this file." )
+    if not parsing_class:
+        logger.error(
+            "I could not work out what type of file %s is." % \
+            args[0]
+        )
+        sys.exit(1)
+    parser = parsing_class(input)
+    if options.dump:
+        from pprint import pprint
+        pprint(parser.tree)
+        sys.exit(0)
+    # FIXME: More than just xmind should be supported
+    writer = XMindWriter(open(args[1],"w"),parser.tree)
     writer.write()
 
